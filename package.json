@@ -2,12 +2,15 @@
   "name": "nextjs_tailwind_shadcn_ts",
   "version": "0.2.1",
   "private": true,
+  "prisma": {
+    "schema": "prisma/schema.prisma"
+  },
   "scripts": {
     "dev": "next dev -p 3000 2>&1 | tee dev.log",
-    "build": "prisma generate && next build",
+    "build": "next build",
     "start": "next start -p 3000",
     "lint": "eslint .",
-    "postinstall": "prisma generate",
+    "postinstall": "prisma generate || echo '[postinstall] AVISO: prisma generate pulado - confira se prisma/schema.prisma existe no repositorio'",
     "db:push": "prisma db push --accept-data-loss",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
