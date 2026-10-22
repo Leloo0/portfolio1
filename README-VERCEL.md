@@ -1,66 +1,94 @@
 # 🚀 Guia de Deploy na Vercel — Portfólio Leonardo Boury
 
-## Por que deu o erro "Não foi possível encontrar nenhum diretório `pages` ou `app`"?
+## 🔍 Diagnóstico do problema (confirmado olhando o seu repositório)
 
-A Vercel roda `next build` na raiz do repositório. Esse erro aparece quando a
-pasta **`src/app`** (onde ficam as páginas do site) **não foi enviada** para o
-repositório — normalmente porque o upload para o GitHub ficou incompleto
-(faltou a pasta `src/` inteira ou parte dela).
+Seu repositório `github.com/Leloo0/portfolio1` está **apenas com arquivos
+soltos** (package.json, configs...) e **sem nenhuma pasta**. Faltam:
 
-**Solução:** suba TODOS os arquivos deste pacote para a RAIZ do repositório,
-garantindo que existam as pastas `src/app`, `src/components`, `src/lib`,
-`public`, `prisma` e `db`, além de `package.json` e `next.config.ts`.
+- `src/` — todo o código do site (por isso "Não foi possível encontrar
+  nenhum diretório `pages` ou `app`")
+- `prisma/schema.prisma` — o schema do banco (por isso "Não foi possível
+  carregar o esquema de `prisma/schema.prisma`" no postinstall)
+- `public/` — as fotos e o CV
+
+**Causa:** o arrastar-e-soltar do site do GitHub está subindo só os
+arquivos e descartando as pastas — aconteceu em todas as tentativas.
+Nada de errado com o pacote ou com a Vercel: o problema é só o método
+de upload.
+
+> 💡 O aviso sobre `package.json#prisma` obsoleto já foi resolvido neste
+> pacote (a chave foi removida — o Prisma encontra o schema sozinho).
 
 ---
 
-## Passo a passo completo
+## ✅ SOLUÇÃO — escolha UM dos dois métodos
 
-### 1. Suba o projeto para o GitHub
+### Método 1 (recomendado): rode o script incluído no pacote
 
-Na raiz do repositório devem ficar (exatamente nesta disposição):
+O pacote agora vem com um script que envia **tudo** (pastas incluídas)
+e **substitui o conteúdo antigo** do repositório de uma vez:
+
+1. Extraia o `portfolio-vercel.zip` no seu computador;
+2. **Windows:** dê dois cliques em `SUBIR-PARA-GITHUB.bat`
+   **Mac/Linux:** abra o Terminal nessa pasta e rode
+   `bash subir-para-github.sh`;
+3. Se ele avisar que o Git não está instalado, instale em
+   [git-scm.com](https://git-scm.com/downloads) e rode de novo;
+4. Quando uma janela do navegador pedir login, entre com sua conta
+   GitHub (é o login normal do site);
+5. Espere aparecer **PRONTO!**.
+
+O script faz: `git init → git add . → commit → push --force` no repo
+`Leloo0/portfolio1`. O `--force` limpa o conteúdo incompleto antigo —
+o repositório fica **idêntico** ao pacote. E a Vercel detecta o push
+e **publica sozinha** (não precisa mexer na Vercel).
+
+### Método 2: GitHub Desktop (app gráfico, sem comandos)
+
+1. Instale o [GitHub Desktop](https://desktop.github.com) e faça login;
+2. **File → Add Local Repository...** → aponte para a pasta extraída;
+   se ele disser que não é um repositório, clique em
+   **Create a Repository Here** (nome: `portfolio1`, deixe o resto padrão);
+3. Escreva um resumo qualquer (ex.: `deploy`) e clique em **Commit**;
+4. **Repository → Push** / **Repository → Force Push** (se pedir);
+   se o botão disser "Fetch origin", clique em **Fetch origin** e depois
+   em **Pull → Force Push** para sobrescrever o conteúdo antigo.
+
+---
+
+## 🔎 Antes de olhar a Vercel, confira o repositório (30 segundos)
+
+Abra `github.com/Leloo0/portfolio1` e verifique:
+
+| O que ver                  | Onde                             |
+|----------------------------|----------------------------------|
+| 3 pastas: `src`, `public`, `prisma` | na raiz do repo         |
+| `page.tsx`                 | dentro de `src/app`              |
+| `schema.prisma`            | dentro de `prisma`               |
+| ~42 itens no total         | contagem da home do repo         |
+
+**Só depois de ver as pastas no GitHub** é que o deploy funciona.
+
+## ▲ Na Vercel
+
+1. [vercel.com/new](https://vercel.com/new) → selecione `portfolio1`
+   (se o projeto já existe no dashboard, o push novo dispara o deploy
+   automaticamente — acompanhe em vercel.com/dashboard);
+2. **Root Directory:** deixe **VAZIO**;
+3. Build Command e Install Command: padrões da Vercel (nada para mudar).
+
+Fluxo validado localmente em ambiente limpo:
 
 ```
-seu-repositorio/
-├── src/                 ← OBRIGATÓRIA (contém app/, components/, lib/)
-├── public/              ← fotos, CV em PDF e prints dos projetos
-├── prisma/              ← schema do banco
-├── db/                  ← banco SQLite local
-├── package.json
-├── next.config.ts
-├── tsconfig.json
-├── postcss.config.mjs
-├── tailwind.config.ts
-├── components.json
-├── eslint.config.mjs
-├── bun.lock
-├── .gitignore
-└── .env.example
+bun install   → 827 pacotes + prisma generate (postinstall)  ✓
+bun run build → next build, 5 páginas estáticas               ✓
 ```
 
-Não suba as pastas `node_modules` e `.next` (o `.gitignore` já cuida disso).
+### Variáveis de ambiente (opcional)
 
-Pelo site do GitHub: **Add file → Upload files** e arraste TUDO de uma vez
-(o GitHub aceita até 100 arquivos por vez — se precisar, envie em lotes).
-
-### 2. Importe na Vercel
-
-1. Acesse [vercel.com/new](https://vercel.com/new) e conecte sua conta GitHub;
-2. Selecione o repositório do portfólio;
-3. A Vercel detecta **Next.js** automaticamente — não precisa mudar nada:
-   - Build Command: `bun run build` (padrão detectado, já funciona)
-   - Output Directory: padrão
-   - Install Command: padrão
-4. **Root Directory:** deixe vazio (a raiz do repo é a raiz do projeto);
-5. Clique em **Deploy**.
-
-### 3. (Opcional) Variáveis de ambiente
-
-Nenhuma variável é obrigatória — o código resolve o banco sozinho.
-Se quiser definir a URL do site (melhora o preview do Open Graph):
-
-| Variável              | Valor                          |
-|-----------------------|--------------------------------|
-| `NEXT_PUBLIC_SITE_URL`| `https://seu-dominio.vercel.app` |
+| Variável               | Valor                            |
+|------------------------|----------------------------------|
+| `NEXT_PUBLIC_SITE_URL` | `https://portfolio1.vercel.app`  |
 
 ---
 
@@ -85,11 +113,12 @@ Para guardar as mensagens de forma permanente, migre para um banco gratuito:
 ## Rodando localmente (para testes)
 
 ```bash
-bun install          # instala dependências (roda prisma generate sozinho)
+bun install          # instala dependências e roda prisma generate sozinho
 bun run dev          # servidor de desenvolvimento em localhost:3000
 bun run build        # build de produção (mesmo comando da Vercel)
 bun run start        # serve o build de produção
 ```
 
-> O `.env` é opcional localmente: sem ele, o site usa `db/custom.db`.
+> O `.env` é opcional localmente: sem ele, o site usa `db/custom.db`
+> (a pasta `db/` é criada automaticamente na primeira execução).
 > Use o `.env.example` como modelo se quiser definir `DATABASE_URL`.
